@@ -1,10 +1,9 @@
 use libloading::Library;
-use std::ffi::CString;
 
 type StartPlugin = fn() -> i32;
 type StopPlugin = fn() -> i32;
-type PluginName = fn() -> CString;
-type PluginVersion = fn() -> CString;
+type PluginName = fn() -> String;
+type PluginVersion = fn() -> String;
 
 #[derive(Debug)]
 pub enum PluginLoadError {
@@ -27,18 +26,12 @@ impl Plugin {
         let name = unsafe {
             lib.get::<PluginName>(b"name")
                 .map_err(|e| PluginLoadError::SymbolLoadError(e))
-        }?()
-        .to_str()
-        .map_err(|e| PluginLoadError::StringParseError(e))?
-        .to_string();
+        }?();
 
         let version = unsafe {
             lib.get::<PluginVersion>(b"version")
                 .map_err(|e| PluginLoadError::SymbolLoadError(e))
-        }?()
-        .to_str()
-        .map_err(|e| PluginLoadError::StringParseError(e))?
-        .to_string();
+        }?();
 
         Ok(Self {
             name,

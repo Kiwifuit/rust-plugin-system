@@ -1,14 +1,21 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+#[no_mangle]
+pub fn start() -> i32 {
+    println!("Hello World!");
+    0
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[no_mangle]
+pub fn stop() -> i32 {
+    println!("Stopping plugin");
+    0
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+#[no_mangle]
+pub fn name() -> String {
+    String::from("hello-world-plugin")
+}
+
+#[no_mangle]
+pub fn version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
 }
