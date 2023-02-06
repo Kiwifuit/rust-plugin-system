@@ -21,7 +21,7 @@ impl Display for PluginLoadError {
             "{}",
             match self {
                 PluginLoadError::LibraryLoadError(e) =>
-                    format!("error occurred while loading the plugin: {}", e),
+                    format!("error occurred while loading {}", e),
                 PluginLoadError::SymbolLoadError(e) =>
                     format!("error occurred while loading a symbol: {}", e),
             }
