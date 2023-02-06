@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::fmt::Display;
+
 use libloading::Library;
 
 type StartPlugin = fn() -> i32;
@@ -9,7 +12,21 @@ type PluginVersion = fn() -> String;
 pub enum PluginLoadError {
     LibraryLoadError(libloading::Error),
     SymbolLoadError(libloading::Error),
-    StringParseError(std::str::Utf8Error),
+}
+
+impl Display for PluginLoadError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                PluginLoadError::LibraryLoadError(e) =>
+                    format!("error occurred while loading the plugin: {}", e),
+                PluginLoadError::SymbolLoadError(e) =>
+                    format!("error occurred while loading a symbol: {}", e),
+            }
+        )
+    }
 }
 
 pub struct Plugin {
@@ -73,8 +90,73 @@ cfg_if::cfg_if! {
     }
 }
 
-pub fn load_plugin(path: &str) -> Result<Plugin, PluginLoadError> {
-    let name = get_lib_name(path);
+pub fn load_plugin(name: &str) -> Result<Plugin, PluginLoadError> {
+    let name = get_lib_name(name);
 
     Plugin::new(&name)
+}
+
+pub struct PluginManager {
+    plugins: Vec<Plugin>,
+}
+
+impl PluginManager {
+    pub fn new<'a>(plugins: Vec<&'a str>) -> (Self, Vec<(&'a str, PluginLoadError)>) {
+        let mut errors = vec![];
+        let mut plugins_loaded = vec![];
+
+        for plugin in plugins {
+            match load_plugin(plugin) {
+                Ok(p) => plugins_loaded.push(p),
+                Err(e) => errors.push((plugin, e)),
+            };
+        }
+
+        (
+            Self {
+                plugins: plugins_loaded,
+            },
+            errors,
+        )
+    }
+
+    pub fn start_all(&self) -> HashMap<String, i32> {
+        let mut returned = HashMap::new();
+
+        for plugin in self.plugins.iter() {
+            let name = format!("{} v{}", plugin.get_name(), plugin.get_version());
+            let status = plugin.start();
+
+            match status {
+                Ok(stat_code) => {
+                    returned.insert(name, stat_code);
+                }
+                Err(err) => {
+                    eprintln!("[{}] {}", name, err);
+                }
+            }
+        }
+
+        returned
+    }
+
+    pub fn stop_all(&self) -> HashMap<String, i32> {
+        let mut returned = HashMap::new();
+
+        for plugin in self.plugins.iter() {
+            let name = format!("{} v{}", plugin.get_name(), plugin.get_version());
+            let status = plugin.stop();
+
+            match status {
+                Ok(stat_code) => {
+                    returned.insert(name, stat_code);
+                }
+                Err(err) => {
+                    eprintln!("[{}] {}", name, err);
+                }
+            }
+        }
+
+        returned
+    }
 }

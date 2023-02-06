@@ -1,13 +1,21 @@
 mod loader;
 
 fn main() {
-    let plugin = loader::load_plugin("plugin").unwrap();
+    let plugins = vec!["hello-world"];
+    let (manager, errors) = loader::PluginManager::new(plugins);
 
-    println!(
-        "Plugin {} v{} initialized",
-        plugin.get_name(),
-        plugin.get_version()
-    );
-    plugin.start();
-    plugin.stop();
+    if !errors.is_empty() {
+        eprintln!("Error occured while loading plugins:");
+
+        for (plugin, err) in errors {
+            eprintln!("[{}] {}", plugin, err);
+        }
+    }
+
+    manager.start_all().iter().for_each(|(name, code)| {
+        println!("[{}] finished initializing with {:x}", name, code);
+    });
+    manager.stop_all().iter().for_each(|(name, code)| {
+        println!("[{}] finished de-initializing with {:x}", name, code);
+    });
 }
