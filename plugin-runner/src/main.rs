@@ -1,3 +1,5 @@
+mod loader;
+
 fn main() {
-    println!("Hello, world!");
+    let plugin = loader::load_plugin("plugin").unwrap();
 }
