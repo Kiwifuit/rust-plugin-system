@@ -1,8 +1,7 @@
 mod loader;
 
 fn main() {
-    let plugins =
-        vec!["/home/misery/Documents/Code/Rust/simple-plugin-system/plugin-runner/hello-world"];
+    let plugins = vec!["hello-world"];
     let (manager, errors) = loader::PluginManager::new(plugins);
 
     if !errors.is_empty() {

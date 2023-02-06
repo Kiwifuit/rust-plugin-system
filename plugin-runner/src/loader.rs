@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::env::current_dir;
 use std::fmt::Display;
+use std::path::PathBuf;
 
 use libloading::Library;
 
@@ -36,7 +38,7 @@ pub struct Plugin {
 }
 
 impl Plugin {
-    pub fn new(path: &String) -> Result<Self, PluginLoadError> {
+    pub fn new(path: &PathBuf) -> Result<Self, PluginLoadError> {
         let lib =
             unsafe { Library::new(path) }.map_err(|e| PluginLoadError::LibraryLoadError(e))?;
 
@@ -91,7 +93,9 @@ cfg_if::cfg_if! {
 }
 
 pub fn load_plugin(name: &str) -> Result<Plugin, PluginLoadError> {
-    let name = get_lib_name(name);
+    // You should change current_dir() to wherever
+    // you wish to store your plugins
+    let name = current_dir().unwrap().join(get_lib_name(name));
 
     Plugin::new(&name)
 }
